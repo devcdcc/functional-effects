@@ -13,7 +13,13 @@ object Looping extends App {
    * Implement a `repeat` combinator using `flatMap` (or `zipRight`) and recursion.
    */
   def repeat[R, E, A](n: Int)(effect: ZIO[R, E, A]): ZIO[R, E, Chunk[A]] =
-    ???
+    if (n <= 0) ZIO.succeed(Chunk.empty)
+    else
+      effect.map(Chunk(_)).zipWith(repeat(n - 1)(effect))(_ ++ _)
+//      for {
+//        a <- effect
+//        acc <- repeat(n -1)(effect)
+//      } yield Chunk(a) ++ acc
 
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     repeat(100)(printLine("All work and no play makes Jack a dull boy")).exitCode
@@ -37,8 +43,8 @@ object Interview extends App {
    */
   def getAllAnswers(questions: List[String]): ZIO[Has[Console], IOException, List[String]] =
     questions match {
-      case Nil     => ???
-      case q :: qs => ???
+      case Nil     => ZIO.succeed(Nil)
+      case q :: qs => (printLine(q) *> readLine).zipWith(getAllAnswers(qs))(_ :: _)
     }
 
   /**
@@ -48,7 +54,7 @@ object Interview extends App {
    * `questions`, to ask the user a bunch of questions, and print the answers.
    */
   def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    ???
+    getAllAnswers(questions).flatMap(lines => printLine(lines.mkString("-",".\n", "\n"))).exitCode
 }
 
 object InterviewGeneric extends App {
